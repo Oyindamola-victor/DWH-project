@@ -175,7 +175,7 @@ staging_songs_copy = ("""
 
 """).format(SONG_DATA, roleArn)
 
-# FINAL TABLES
+# FINAL TABLES just test
 
 songplay_table_insert = ("""
 
