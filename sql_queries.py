@@ -38,7 +38,7 @@ time_table_drop = "DROP TABLE IF EXISTS time"
 # TODO: TRY AND PREVIEW THE DATA
 
 
-# CREATE TABLES
+# CREATE STAGING TABLES
 
 staging_events_table_create= ("""
     
@@ -83,6 +83,7 @@ staging_songs_table_create = ("""
 
 """)
 
+# CREATING OF FACT TABLE
 songplay_table_create = ("""   CREATE TABLE songplays 
                             (
                                 songplay_id         BIGINT IDENTITY(0,1)    PRIMARY KEY SORTKEY,
@@ -97,31 +98,28 @@ songplay_table_create = ("""   CREATE TABLE songplays
                             )
                         """)
 
+# CREATING OF DIMENSION TABLES
+
 user_table_create = ("""   CREATE TABLE users
-    (
-        user_id             INTEGER         NOT NULL sortkey PRIMARY KEY,
-        first_name          VARCHAR,
-        last_name           VARCHAR,
-        gender              VARCHAR,
-        level               VARCHAR
-    )
+                            (
+                                user_id             INTEGER         NOT NULL sortkey PRIMARY KEY,
+                                first_name          VARCHAR,
+                                last_name           VARCHAR,
+                                gender              VARCHAR,
+                                level               VARCHAR
+                            )
+                        """)
 
-""")
+song_table_create = ("""    CREATE TABLE songs
+                            (
+                                song_id             VARCHAR          NOT NULL sortkey PRIMARY KEY,
+                                song_title          VARCHAR          NOT NULL,
+                                artist_id           VARCHAR          NOT NULL,
+                                year                INTEGER          NOT NULL,
+                                duration            FLOAT
+                            )
 
-song_table_create = ("""
-    
-    CREATE TABLE songs
-    (
-        song_id             VARCHAR          NOT NULL sortkey PRIMARY KEY,
-        song_title          VARCHAR          NOT NULL,
-        artist_id           VARCHAR          NOT NULL,
-        year                INTEGER          NOT NULL,
-        duration            FLOAT
-    
-    )
-    
-
-""")
+                        """)
 
 artist_table_create = ("""
 
@@ -151,7 +149,7 @@ time_table_create = ("""
 
 """)
 
-# STAGING TABLES
+# LOADING OF STAGING TABLES
 
 staging_events_copy = ("""
 
@@ -175,7 +173,7 @@ staging_songs_copy = ("""
 
 """).format(SONG_DATA, roleArn)
 
-# FINAL TABLES
+# INSERTING INTO FACT & DIMENSION TABLES
 
 songplay_table_insert = ("""
 
