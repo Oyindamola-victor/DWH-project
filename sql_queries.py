@@ -23,15 +23,20 @@ iam = boto3.client('iam',
 
 roleArn = iam.get_role(RoleName=DWH_IAM_ROLE_NAME)['Role']['Arn']
 
-# DROP TABLES
+# DROP TABLES IF THEY EXIST
 
 staging_events_table_drop = "DROP TABLE IF EXISTS staging_events"
-staging_songs_table_drop = "DROP TABLE IF EXISTS staging_songs"
-songplay_table_drop = "DROP TABLE IF EXISTS songplays"
+staging_songs_table_drop = "DROP TABLE IF EXISTS staging songs"
+songplay_table_drop = "DROP TABLE IF EXISTS songplay"
 user_table_drop = "DROP TABLE IF EXISTS users"
 song_table_drop = "DROP TABLE IF EXISTS songs"
 artist_table_drop = "DROP TABLE IF EXISTS artists"
 time_table_drop = "DROP TABLE IF EXISTS time"
+
+
+
+# TODO: TRY AND PREVIEW THE DATA
+
 
 # CREATE TABLES
 
@@ -78,28 +83,23 @@ staging_songs_table_create = ("""
 
 """)
 
-songplay_table_create = ("""
+songplay_table_create = ("""   CREATE TABLE songplays 
+                            (
+                                songplay_id         BIGINT IDENTITY(0,1)    PRIMARY KEY SORTKEY,
+                                start_time          timestamp               NOT NULL,
+                                user_id             INTEGER                 NOT NULL,
+                                level               VARCHAR,
+                                song_id             VARCHAR                 NOT NULL DISTKEY,
+                                artist_id           VARCHAR                 NOT NULL,
+                                session_id          INTEGER,
+                                user_agent          VARCHAR,
+                                location            VARCHAR
+                            )
+                        """)
 
-    CREATE TABLE songplays 
+user_table_create = ("""   CREATE TABLE users
     (
-        songplay_id         BIGINT IDENTITY(0,1)    PRIMARY KEY,
-        start_time          timestamp               NOT NULL sortkey distkey,
-        user_id             INTEGER                 NOT NULL,
-        level               VARCHAR,
-        song_id             VARCHAR                 NOT NULL,
-        artist_id           VARCHAR                 NOT NULL,
-        session_id          INTEGER,
-        user_agent          VARCHAR,
-        location            VARCHAR
-    )
-
-""")
-
-user_table_create = ("""
-
-    CREATE TABLE users
-    (
-        user_id             INTEGER          NOT NULL sortkey PRIMARY KEY,
+        user_id             INTEGER         NOT NULL sortkey PRIMARY KEY,
         first_name          VARCHAR,
         last_name           VARCHAR,
         gender              VARCHAR,
@@ -175,7 +175,7 @@ staging_songs_copy = ("""
 
 """).format(SONG_DATA, roleArn)
 
-# FINAL TABLES just test
+# FINAL TABLES
 
 songplay_table_insert = ("""
 
