@@ -40,48 +40,43 @@ time_table_drop = "DROP TABLE IF EXISTS time"
 
 # CREATE STAGING TABLES
 
-staging_events_table_create= ("""
-    
-    CREATE TABLE staging_events
-    (
-        artist_name         VARCHAR,
-        auth                VARCHAR,
-        firstName           VARCHAR,
-        gender              VARCHAR,
-        itemInSession       INTEGER,
-        lastName            VARCHAR,
-        length              FLOAT, 
-        level               VARCHAR,
-        location            VARCHAR,
-        method              VARCHAR,
-        page                VARCHAR,
-        registration        FLOAT, 
-        sessionId           INTEGER,
-        song                VARCHAR,
-        status              INTEGER,
-        ts                  bigint,
-        userAgent           VARCHAR,
-        userId              INTEGER
-    )
-""")
+staging_events_table_create= ("""   CREATE TABLE staging_events
+                                    (
+                                        artist_name         VARCHAR,
+                                        auth                VARCHAR,
+                                        firstName           VARCHAR,
+                                        gender              VARCHAR,
+                                        itemInSession       INTEGER,
+                                        lastName            VARCHAR,
+                                        length              FLOAT, 
+                                        level               VARCHAR,
+                                        location            VARCHAR,
+                                        method              VARCHAR,
+                                        page                VARCHAR,
+                                        registration        FLOAT, 
+                                        sessionId           INTEGER,
+                                        song                VARCHAR,
+                                        status              INTEGER,
+                                        ts                  bigint,
+                                        userAgent           VARCHAR,
+                                        userId              INTEGER
+                                    )
+                                """)
 
-staging_songs_table_create = ("""
-
-    CREATE TABLE staging_songs
-    (
-        num_songs           INTEGER,
-        artist_id           VARCHAR,
-        artist_latitude     FLOAT,
-        artist_longitude    FLOAT,
-        artist_location     VARCHAR,
-        artist_name         VARCHAR,
-        song_id             VARCHAR,
-        title               VARCHAR,
-        duration            FLOAT,
-        year                INTEGER
-     )
-
-""")
+staging_songs_table_create = ("""    CREATE TABLE staging_songs
+                                        (
+                                            num_songs           INTEGER,
+                                            artist_id           VARCHAR,
+                                            artist_latitude     FLOAT,
+                                            artist_longitude    FLOAT,
+                                            artist_location     VARCHAR,
+                                            artist_name         VARCHAR,
+                                            song_id             VARCHAR,
+                                            title               VARCHAR,
+                                            duration            FLOAT,
+                                            year                INTEGER
+                                        )
+                                    """)
 
 # CREATING OF FACT TABLE
 songplay_table_create = ("""   CREATE TABLE songplays 
@@ -102,7 +97,7 @@ songplay_table_create = ("""   CREATE TABLE songplays
 
 user_table_create = ("""   CREATE TABLE users
                             (
-                                user_id             INTEGER         NOT NULL sortkey PRIMARY KEY,
+                                user_id             INTEGER         NOT NULL SORTKEY PRIMARY KEY,
                                 first_name          VARCHAR,
                                 last_name           VARCHAR,
                                 gender              VARCHAR,
@@ -112,7 +107,7 @@ user_table_create = ("""   CREATE TABLE users
 
 song_table_create = ("""    CREATE TABLE songs
                             (
-                                song_id             VARCHAR          NOT NULL sortkey PRIMARY KEY,
+                                song_id             VARCHAR          NOT NULL SORTKEY PRIMARY KEY,
                                 song_title          VARCHAR          NOT NULL,
                                 artist_id           VARCHAR          NOT NULL,
                                 year                INTEGER          NOT NULL,
@@ -121,63 +116,54 @@ song_table_create = ("""    CREATE TABLE songs
 
                         """)
 
-artist_table_create = ("""
+artist_table_create = ("""    CREATE TABLE artists
+                                (
+                                    artist_id                  VARCHAR         NOT NULL SORTKEY PRIMARY KEY,
+                                    artist_name                VARCHAR         NOT NULL,
+                                    artist_location            VARCHAR,
+                                    artist_latitude            FLOAT,
+                                    artist_longitude           FLOAT
+                                )
 
-    CREATE TABLE artists
-    (
-        artist_id                  VARCHAR         NOT NULL sortkey PRIMARY KEY,
-        artist_name                VARCHAR         NOT NULL,
-        artist_location            VARCHAR,
-        artist_latitude            FLOAT,
-        artist_longitude           FLOAT
-    )
+                            """)
 
-""")
-
-time_table_create = ("""
-    
-    CREATE TABLE time
-    (
-        start_time          timestamp        NOT NULL distkey sortkey PRIMARY KEY,
-        hour                INTEGER          NOT NULL,
-        day                 INTEGER          NOT NULL,
-        week                INTEGER          NOT NULL, 
-        month               INTEGER          NOT NULL,
-        year                INTEGER          NOT NULL,
-        weekday             INTEGER          NOT NULL        
-    )
-
-""")
+time_table_create = ("""  CREATE TABLE time
+                            (
+                                start_time          timestamp        NOT NULL distkey sortkey PRIMARY KEY,
+                                hour                INTEGER          NOT NULL,
+                                day                 INTEGER          NOT NULL,
+                                week                INTEGER          NOT NULL, 
+                                month               INTEGER          NOT NULL,
+                                year                INTEGER          NOT NULL,
+                                weekday             INTEGER          NOT NULL        
+                            )
+                        """)
 
 # LOADING OF STAGING TABLES
 
-staging_events_copy = ("""
-
+staging_events_copy = ( f"""
     COPY staging_events 
-    FROM {}
-    iam_role '{}'
+    FROM {Log_data}
+    iam_role '{roleArn}'
     COMPUPDATE OFF 
     REGION 'us-west-2'
-    FORMAT AS JSON {};
+    FORMAT AS JSON {LOG_JSONPATH};
 
-""").format(Log_data, roleArn, LOG_JSONPATH)
+""")
 
 staging_songs_copy = ("""
-
     COPY staging_songs 
-    FROM {}
-    iam_role '{}'
+    FROM {SONG_DATA}
+    iam_role '{roleArn}'
     COMPUPDATE OFF 
     REGION 'us-west-2'
     FORMAT AS JSON 'auto';
-
-""").format(SONG_DATA, roleArn)
+""")
 
 # INSERTING INTO FACT & DIMENSION TABLES
 
-songplay_table_insert = ("""
-
-    INSERT INTO songplays (start_time,
+songplay_table_insert = ("""    INSERT INTO songplays (
+                            start_time,
                             user_id,    
                             level,     
                             song_id,    
@@ -187,7 +173,7 @@ songplay_table_insert = ("""
                             location
                            )
                            
-    SELECT          DISTINCT(timestamp 'epoch' + se.ts/1000 * interval '1 second')             AS start_time,
+    SELECT DISTINCT(timestamp 'epoch' + se.ts/1000 * interval '1 second') AS start_time,
                     se.userId                              AS user_id,
                     se.level                               AS level, 
                     ss.song_id                             AS song_id,
@@ -195,17 +181,12 @@ songplay_table_insert = ("""
                     se.sessionId                           AS sessionId,
                     se.userAgent                           AS user_agent,
                     se.location                            AS location
-    FROM staging_songs ss 
-    JOIN staging_events se ON (ss.artist_name = se.artist_name
+    FROM staging_songs AS "ss" 
+    JOIN staging_events AS "se" ON (ss.artist_name = se.artist_name
                                AND ss.title = se.song)
-
 """)
 
-## Make sure you include the upsert
-
-user_table_insert = ("""
-
-    INSERT INTO users (
+user_table_insert = (""" INSERT INTO users (
                        user_id,   
                        first_name,
                        last_name, 
@@ -218,18 +199,11 @@ user_table_insert = ("""
                 se.gender                  AS gender,
                 se.level                   AS level
                 
-    FROM staging_events se  
+    FROM staging_events AS "se"  
     WHERE se.userId IS NOT NULL
-
-
-
 """)
 
-##ON CONFLICT (user_id) DO UPDATE SET level = EXCLUDED.level;
-
-song_table_insert = ("""
-
-    INSERT INTO songs (
+song_table_insert = ("""  INSERT INTO songs (
                                 song_id,     
                                 song_title,  
                                 artist_id,   
@@ -241,13 +215,10 @@ song_table_insert = ("""
                 ss.artist_id          AS artist_id,
                 ss.year               AS year,
                 ss.duration           AS duration
-    FROM staging_songs ss 
-    
+    FROM staging_songs AS "ss"
 """)
 
-artist_table_insert = ("""
-
-    INSERT INTO artists (
+artist_table_insert = ("""  INSERT INTO artists (
                                   artist_id,  
                                   artist_name,
                                   artist_location,   
@@ -259,14 +230,10 @@ artist_table_insert = ("""
                 ss.artist_location       AS artist_location,
                 ss.artist_latitude       AS artist_latitude,
                 ss.artist_longitude      AS artist_longitude
-    FROM staging_songs ss 
-
-
+    FROM staging_songs AS "ss" 
 """)
 
-time_table_insert = ("""
-
-    INSERT INTO time (
+time_table_insert = ("""  INSERT INTO time (
                                 start_time,
                                 hour,      
                                 day,       
@@ -282,7 +249,7 @@ time_table_insert = ("""
                 EXTRACT(month from s.start_time)        AS month,
                 EXTRACT(year  from s.start_time)        AS year,
                 EXTRACT(dow   from s.start_time)        AS weekday
-    FROM songplays s  
+    FROM songplays AS "s"  
 """)
 
 ## Querying the number of rows for each table that the data was inserted into
